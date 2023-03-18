@@ -1,4 +1,4 @@
-from textwrap import dedent
+from textwrap import dedent, indent
 from typing import Optional
 import typer
 from rich import print
@@ -36,6 +36,7 @@ def _prompt_for_next():
         if not next:
             print("See you next time.")
             raise typer.Abort()
+    print("")
 
 
 def main(
@@ -59,6 +60,7 @@ def main(
     print(
         f"Let's calibrate e-steps for {filament_brand} {filament_type} filament with",
         f"current e-step of [bold green]{current_evalue}[/bold green].",
+        "\n",
     )
 
     extrude_length: float = 100
@@ -80,13 +82,15 @@ def main(
         f"(F1) of {extrude_length} mm per minute.",
     )
     print(
-        dedent(
+        indent(
             """
     M83 
     G1 E100 F100    
-    """
+    """,
+            "    ",
         )
     )
+    _prompt_for_next()
 
     print("[bold]Step 4[/bold]: Measure left over filament.")
     print(f"Target is {extra_length} mm")
@@ -100,13 +104,15 @@ def main(
         actual_extruded, current_evalue, extrude_length=extrude_length
     )
     print(
-        f"New e-step value is {new_evalue}.   Run the following to set this new value."
+        f"New e-step value is {new_evalue:.1f}.   Set this new value (E92) and save it",
+        "to ROM (M500).",
+        "\n",
     )
     gcode = f"""
-            E92 {new_evalue:.1f}
+            E92 E{new_evalue:.1f}
             M500"""
 
-    print(dedent(gcode))
+    print(indent(gcode, "    "))
 
 
 if __name__ == "__main__":
