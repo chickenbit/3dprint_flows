@@ -4,7 +4,7 @@ import typer
 from rich import print
 
 
-def calc_step_rate(
+def _calc_step_rate(
     actual_extruded: int, step_rate: float, extrude_length: int = 100
 ) -> float:
     steps = step_rate * extrude_length
@@ -12,21 +12,23 @@ def calc_step_rate(
     return accurate_step_rate
 
 
-def change_step_rate(step_rate: float) -> str:
+def _change_step_rate(step_rate: float) -> str:
     gcode = f"""
 		E92 {step_rate:.1f}
 		M500"""
     return dedent(gcode)
 
 
-def get_step_rate_gcode(
+def _get_step_rate_gcode(
     actual_extruded: int, step_rate: float, extrude_length: int = 100
 ):
-    step_rate = calc_step_rate(actual_extruded, step_rate, extrude_length)
-    print(change_step_rate(step_rate))
+    step_rate = _calc_step_rate(actual_extruded, step_rate, extrude_length)
+    print(_change_step_rate(step_rate))
 
 
 # TODO configure defaults via pydantic config
+# TODO if matching, Congratulations
+# TODO save stuff to disk/honor reading last one in
 
 
 def _prompt_for_next():
@@ -40,14 +42,13 @@ def _prompt_for_next():
 
 
 def main(
-    filament_brand: Optional[str] = None,
-    filament_type: Optional[str] = "PLA",
+    filament_brand: str = typer.Option(..., prompt="What is the filament brand?"),
+    filament_type: str = typer.Option(..., prompt="What type of filament?  (PLA|PETG)"),
+    extrude_length: float = 100,
+    extra_length: float = 20,
+    extruder_head_temp: float = 200,
     current_evalue: Optional[float] = None,
 ):
-    if filament_brand is None:
-        filament_brand = typer.prompt("What is the filament brand?")
-    if filament_type is None:
-        filament_type = typer.prompt("What type of filament?  (PLA|PETG)")
     if current_evalue is None:
         print(
             "Provide the current extruder 'e-steps' value which can be",
@@ -63,16 +64,12 @@ def main(
         "\n",
     )
 
-    extrude_length: float = 100
-    extra_length: float = 20
     measured_filament = extrude_length + extra_length
 
     print(f"[bold]Step 1[/bold]: Measure and mark {measured_filament} mm on filament.")
     _prompt_for_next()
 
-    head_temp: float = 200
-
-    print(f"[bold]Step 2[/bold]: Preheat extruder head to {head_temp} C.")
+    print(f"[bold]Step 2[/bold]: Preheat extruder head to {extruder_head_temp} C.")
     _prompt_for_next()
 
     print(
@@ -100,7 +97,7 @@ def main(
 
     actual_extruded = measured_filament - float(actual_extra)
 
-    new_evalue = calc_step_rate(
+    new_evalue = _calc_step_rate(
         actual_extruded, current_evalue, extrude_length=extrude_length
     )
     print(
@@ -109,7 +106,7 @@ def main(
         "\n",
     )
     gcode = f"""
-            E92 E{new_evalue:.1f}
+            M92 E{new_evalue:.1f}
             M500"""
 
     print(indent(gcode, "    "))
