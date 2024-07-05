@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "3dprint_flows"
+version = "0.0.1"
+authors = [
+  { name="Steven B", email="author@example.com" },
+]
+description = "Interactive 3dprint workflows."
+readme = "README.md"
+requires-python = ">=3.7"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "pydantic",
+  "rich",
+  "typer"
+]
+
+[project.optional-dependencies]
+typer_all = ["typer[all]"]
+test = [
+  "pytest",
+  "pytest-cov",
+  "ruff",
+  "pre-commit"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/chickenbit/3dprint_flows"
+"Bug Tracker" = "https://github.com/chickenbit/3dprint_flows/issues"
