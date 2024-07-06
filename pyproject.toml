@@ -36,3 +36,7 @@ test = [
 [project.urls]
 "Homepage" = "https://github.com/chickenbit/3dprint_flows"
 "Bug Tracker" = "https://github.com/chickenbit/3dprint_flows/issues"
+
+[project.scripts]
+calibrate = "calibrate:main"
+
