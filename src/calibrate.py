@@ -112,5 +112,9 @@ def main(
     print(indent(gcode, "    "))
 
 
-if __name__ == "__main__":
+def _wrap():
     typer.run(main)
+
+
+if __name__ == "__main__":
+    _wrap()
