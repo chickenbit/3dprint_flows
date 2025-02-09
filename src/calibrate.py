@@ -1,7 +1,23 @@
+from datetime import datetime
 from textwrap import dedent, indent
 from typing import Optional
+from model import EValueCalibration
 import typer
-from rich import print
+from rich.console import Console
+from rich.theme import Theme
+from rich.prompt import Confirm
+
+from rich.prompt import Prompt, FloatPrompt
+
+calibrate_theme = Theme(
+    {
+        "step": "bold green",
+        "gcode": "white on black",
+    }
+)
+
+_console = Console(theme=calibrate_theme)
+print = _console.print
 
 
 def _calc_step_rate(
@@ -13,9 +29,17 @@ def _calc_step_rate(
 
 
 def _change_step_rate(step_rate: float) -> str:
-    gcode = f"""
+    """Returns gcode for setting step-rate
+
+    Args:
+        step_rate (float): desired step-rate
+
+    Returns:
+        str: gcode
+    """
+    gcode = f"""[gcode]
 		E92 {step_rate:.1f}
-		M500"""
+		M500[/gcode]"""
     return dedent(gcode)
 
 
@@ -32,84 +56,154 @@ def _get_step_rate_gcode(
 
 
 def _prompt_for_next():
-    next = typer.confirm("Ready for next step?")
-    if not next:
-        next = typer.confirm("Really abort?")
+    next = None
+    while next is None:
+        next = Confirm.ask("Ready for next step?", console=_console)
         if not next:
-            print("See you next time.")
-            raise typer.Abort()
+            next = Confirm.ask("Really abort?", console=_console)
+            if next:
+                print("See you next time.")
+                raise typer.Abort()
+            else:
+                next = None
     print("")
 
 
+def _get_params(
+    filament_brand: str,
+    filament_type: str,
+    filament_color: str,
+    extruder_head_temp: float,
+    evalue: float = None,
+) -> EValueCalibration:
+    filament = EValueCalibration(
+        brand=filament_brand,
+        type=filament_type,
+        filament_color=filament_color,
+        extruder_temp=extruder_head_temp,
+        e_value=evalue,
+        dt=datetime.now(),
+    )
+
+    choices = ["Continue", "Brand", "Type", "Color", "Temp"]
+    choice = Prompt.ask(
+        f"Continue or change params of {filament}",
+        console=_console,
+        choices=choices,
+        default="Continue",
+    )
+    while choice != "Continue":
+        if choice == "Brand":
+            filament.brand = Prompt.ask("Enter filament brand")
+        elif choice == "Type":
+            filament.type = Prompt.ask(
+                "Enter filament type",
+                console=_console,
+                choices=["PLA", "PETG", "TPU"],
+                default="PLA",
+            )
+        elif choice == "Color":
+            filament.color = Prompt.ask("Enter filament color", console=_console)
+        elif choice == "Temp":
+            filament.extruder_temp = FloatPrompt.ask(
+                "Extruder temperature", console=_console
+            )
+        choice = Prompt.ask(
+            f"Continue or change params of {filament}",
+            console=_console,
+            choices=choices,
+            default="Continue",
+        )
+
+    return filament
+
+
 def main(
-    filament_brand: str = typer.Option(..., prompt="What is the filament brand?"),
-    filament_type: str = typer.Option(..., prompt="What type of filament?  (PLA|PETG)"),
+    filament_brand: str = "AnyCubic",
+    filament_type: str = "PLA",
+    filament_color: str = None,
     extrude_length: float = 100,
     extra_length: float = 20,
     extruder_head_temp: float = 200,
     current_evalue: Optional[float] = None,
 ):
-    if current_evalue is None:
-        print(
-            "Provide the current extruder 'e-steps' value which can be",
-            "obtained by running the [bold]M503[/bold] command.",
-            "FYI: units is steps/mm",
-        )
-        current_evalue = typer.prompt("Current e-step Value (example: 824.7)")
-        current_evalue = float(current_evalue)
+    _console.rule(
+        "Let's calibrate the e-steps for the three dimensional printer!", align="left"
+    )
+    filament = _get_params(
+        filament_brand,
+        filament_type,
+        filament_color,
+        extruder_head_temp,
+        current_evalue,
+    )
+    print(
+        "Provide the current extruder 'e-steps' value which can be",
+        "obtained by running the [gcode]M503[/gcode] command.",
+        "FYI: units is steps/mm",
+    )
+    current_evalue = FloatPrompt.ask(
+        "Current e-step Value (example: 824.7)", console=_console
+    )
 
     print(
-        f"Let's calibrate e-steps for {filament_brand} {filament_type} filament with",
+        f"Let's calibrate e-steps for {filament.brand} {filament.type} filament with",
         f"current e-step of [bold green]{current_evalue}[/bold green].",
         "\n",
     )
 
     measured_filament = extrude_length + extra_length
 
-    print(f"[bold]Step 1[/bold]: Measure and mark {measured_filament} mm on filament.")
+    _console.rule("[step]Step 1[/step]")
+    print(f"Measure and mark {measured_filament} mm on filament.")
     _prompt_for_next()
 
-    print(f"[bold]Step 2[/bold]: Preheat extruder head to {extruder_head_temp} C.")
+    _console.rule("[step]Step 2[/step]")
+    print(f"Preheat extruder head to {filament.extruder_temp} C.")
     _prompt_for_next()
 
+    _console.rule("[step]Step 3[/step]")
     print(
-        "[bold]Step 3[/bold]: Run the folowing gcode to 'enable relative mode' (M83)",
-        f"and using toolhead (G1) extrude {extrude_length} mm (E{extrude_length})",
+        "Run the following gcode to 'enable relative mode' ([gcode]M83[/gcode])",
+        f"and using toolhead ([gcode]G1[/gcode]) extrude {extrude_length} mm ([gcode]E{extrude_length}[/gcode])",
         "filament with feed rate",
-        f"(F1) of {extrude_length} mm per minute.",
+        f"([gcode]F1[/gcode]) of {extrude_length} mm per minute.",
     )
     print(
         indent(
-            """
+            """[gcode]
     M83 
     G1 E100 F100    
+    [/gcode]
     """,
             "    ",
         )
     )
     _prompt_for_next()
 
-    print("[bold]Step 4[/bold]: Measure left over filament.")
+    _console.rule("[step]Step 4[/step]")
+    print("Measure left over filament.")
     print(f"Target is {extra_length} mm")
     _prompt_for_next()
 
-    actual_extra = typer.prompt("What is the left over amount?")
+    actual_extra = FloatPrompt.ask("What is the left over amount?", console=_console)
 
-    actual_extruded = measured_filament - float(actual_extra)
+    actual_extruded = measured_filament - actual_extra
 
-    new_evalue = _calc_step_rate(
+    filament.e_value = _calc_step_rate(
         actual_extruded, current_evalue, extrude_length=extrude_length
     )
     print(
-        f"New e-step value is {new_evalue:.1f}.   Set this new value (E92) and save it",
-        "to ROM (M500).",
+        f"New e-step value is {filament.e_value:.1f}.   Set this new value ([gcode]E92[/gcode]) and save it",
+        "to ROM ([gcode]M500[/gcode]).",
         "\n",
     )
-    gcode = f"""
-            M92 E{new_evalue:.1f}
-            M500"""
-
+    gcode = f"""[gcode]
+            M92 E{filament.e_value:.1f}
+            M500[/gcode]"""
     print(indent(gcode, "    "))
+
+    print(f"Data: {filament}")
 
 
 def _wrap():
