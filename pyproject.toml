@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "3dprint_flows"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Steven B", email="author@example.com" },
 ]
@@ -21,17 +21,9 @@ classifiers = [
 dependencies = [
   "pydantic",
   "rich",
-  "typer"
+  "typer[all]"
 ]
 
-[project.optional-dependencies]
-typer_all = ["typer[all]"]
-test = [
-  "pytest",
-  "pytest-cov",
-  "ruff",
-  "pre-commit"
-]
 
 [project.urls]
 "Homepage" = "https://github.com/chickenbit/3dprint_flows"

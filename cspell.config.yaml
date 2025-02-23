@@ -3,8 +3,13 @@ ignorePaths: []
 dictionaryDefinitions: []
 dictionaries: []
 words:
+  - dprint
   - evalue
   - gcode
   - PETG
+  - pydantic
+  - pytest
+  - setuptools
+  - typer
 ignoreWords: []
 import: []

@@ -13,3 +13,7 @@ class EValueCalibration(Filament):
     e_value: float | None = None
     extruder_temp: float
     dt: datetime = None
+
+
+class CalibrationHistory(BaseModel):
+    records: list[EValueCalibration]

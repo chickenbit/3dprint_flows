@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from textwrap import dedent, indent
 from typing import Optional
 from model import EValueCalibration
@@ -8,6 +9,8 @@ from rich.theme import Theme
 from rich.prompt import Confirm
 
 from rich.prompt import Prompt, FloatPrompt
+
+_history_filename = "_3dprint_flows_calibration_history.json"
 
 calibrate_theme = Theme(
     {
@@ -126,6 +129,7 @@ def main(
     extra_length: float = 20,
     extruder_head_temp: float = 200,
     current_evalue: Optional[float] = None,
+    dry_run: bool = False,
 ):
     _console.rule(
         "Let's calibrate the e-steps for the three dimensional printer!", align="left"
@@ -204,6 +208,15 @@ def main(
     print(indent(gcode, "    "))
 
     print(f"Data: {filament}")
+
+    # _write_calibration(filament)
+
+
+def _write_calibration(calibration: EValueCalibration, file_path: Path):
+    # path_and_name = file_path / _history_filename
+    # if path_and_name.exist():
+    #     pass
+    ...
 
 
 def _wrap():
