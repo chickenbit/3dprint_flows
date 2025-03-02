@@ -22,7 +22,7 @@ Current e-step Value (example: 824.7):
 
 Here is an example usage showing the script prompts and usage on the right, and [Pronterface](https://www.pronterface.com/) on the left.  Pronterface is software one can use to interface with 3D Printers.  
 
-![Exapmle Usage](calibrate-example.png)
+![Example Usage](calibrate-example.png)
 
 # Future
 

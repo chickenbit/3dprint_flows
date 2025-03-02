@@ -16,4 +16,4 @@ class EValueCalibration(Filament):
 
 
 class CalibrationHistory(BaseModel):
-    records: list[EValueCalibration]
+    records: list[EValueCalibration] = []

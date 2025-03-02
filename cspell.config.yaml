@@ -7,6 +7,7 @@ words:
   - evalue
   - gcode
   - PETG
+  - Pronterface
   - pydantic
   - pytest
   - setuptools

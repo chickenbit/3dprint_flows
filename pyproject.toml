@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "3dprint_flows"
-version = "0.1.0"
+name = "print_flows"
+version = "0.2.0"
 authors = [
   { name="Steven B", email="author@example.com" },
 ]
@@ -30,5 +30,5 @@ dependencies = [
 "Bug Tracker" = "https://github.com/chickenbit/3dprint_flows/issues"
 
 [project.scripts]
-calibrate = "calibrate:_wrap"
+calibrate = "print_flows.calibrate:_wrap"
 

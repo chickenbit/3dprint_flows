@@ -2,7 +2,9 @@ from datetime import datetime
 from pathlib import Path
 from textwrap import dedent, indent
 from typing import Optional
-from model import EValueCalibration
+
+from pydantic_core import from_json
+from .model import CalibrationHistory, EValueCalibration
 import typer
 from rich.console import Console
 from rich.theme import Theme
@@ -10,7 +12,7 @@ from rich.prompt import Confirm
 
 from rich.prompt import Prompt, FloatPrompt
 
-_history_filename = "_3dprint_flows_calibration_history.json"
+_history_filename = "3dprint_flows_calibration_history.json"
 
 calibrate_theme = Theme(
     {
@@ -28,7 +30,7 @@ def _calc_step_rate(
 ) -> float:
     steps = step_rate * extrude_length
     accurate_step_rate = steps / actual_extruded
-    return accurate_step_rate
+    return round(accurate_step_rate, 2)
 
 
 def _change_step_rate(step_rate: float) -> str:
@@ -209,14 +211,22 @@ def main(
 
     print(f"Data: {filament}")
 
-    # _write_calibration(filament)
+    _write_calibration(filament)
 
 
-def _write_calibration(calibration: EValueCalibration, file_path: Path):
-    # path_and_name = file_path / _history_filename
-    # if path_and_name.exist():
-    #     pass
-    ...
+def _write_calibration(calibration: EValueCalibration, file_path: Path = Path(".")):
+    path_and_name = file_path / _history_filename
+    calibration_data = CalibrationHistory()
+    if path_and_name.exists():
+        mode = "r"
+        with open(path_and_name, mode) as fh:
+            data = fh.read()
+            temp_history = CalibrationHistory.model_validate(from_json(data))
+            calibration_data.records.extend(temp_history.records)
+    mode = "wt"
+    with open(path_and_name, mode) as fh:
+        calibration_data.records.append(calibration)
+        fh.write(calibration_data.model_dump_json(indent=2))
 
 
 def _wrap():
