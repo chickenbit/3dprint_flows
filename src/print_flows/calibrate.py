@@ -133,9 +133,7 @@ def main(
     current_evalue: Optional[float] = None,
     dry_run: bool = False,
 ):
-    _console.rule(
-        "Let's calibrate the e-steps for the three dimensional printer!", align="left"
-    )
+    _console.rule("Let's calibrate e-steps a three dimensional printer!")
     filament = _get_params(
         filament_brand,
         filament_type,
